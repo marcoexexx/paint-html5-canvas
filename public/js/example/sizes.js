@@ -1,6 +1,6 @@
 "use strict";
 
-import { SizingTool } from "../../dist/index.js";
+import { SizingTool } from "../../dist/paint.js";
 
 /**
  * @param {SizingTool} sizeTool

@@ -1,6 +1,85 @@
-import { AppError, ErrorKind } from "../error.js";
-import { createElement } from "../utils.js";
-import { Tool } from "./index.js";
+const ErrorKind = {
+    CanvasNotFoundError: "CanvasNotFoundError",
+    ElementIdNotFoundError: "ElementIdNotFoundError",
+    ParentElementNotFoundError: "ParentElementNotFoundError",
+    NotImplementedError: "NotImplementedError",
+};
+class AppError extends Error {
+    constructor(kind, message) {
+        super(`${message}: ${kind}`);
+        this.kind = kind;
+    }
+    static new(kind, message = "Unknown error") {
+        return new AppError(kind, message);
+    }
+}
+
+function createElement(parentQuery, elementInput) {
+    var _a;
+    const root = window.document.querySelector(parentQuery);
+    const element = window.document.createElement(elementInput.tagName);
+    if (!root)
+        throw AppError.new(ErrorKind.ParentElementNotFoundError);
+    Object.assign(element.style, elementInput.style);
+    if (((_a = elementInput === null || elementInput === void 0 ? void 0 : elementInput.innerProps) === null || _a === void 0 ? void 0 : _a.classList)
+        && elementInput.innerProps.classList.length > 0) {
+        elementInput.innerProps.classList.forEach(className => element.classList.add(className));
+    }
+    if (elementInput.innerProps) {
+        Object.keys(elementInput.innerProps).forEach(attr => {
+            if (attr !== "classList") {
+                // @ts-ignore
+                element.setAttribute(attr, elementInput.innerProps[attr]);
+            }
+        });
+    }
+    root.appendChild(element);
+    return element;
+}
+
+class Tool {
+    constructor(name) {
+        this.name = name;
+    }
+    resize({}) {
+        throw AppError.new(ErrorKind.NotImplementedError, `Please set resize method in your tool: "${this.name}"`);
+    }
+}
+
+class ColorTool extends Tool {
+    constructor(props) {
+        super("ColorTool");
+        this.props = props;
+        this.currentColor = "#00";
+        this.props.setAttribute("id", "color-container");
+    }
+    static new(props) {
+        return new ColorTool(props);
+    }
+    haldleOnClick(color) {
+        return (_evt) => {
+            this.currentColor = color;
+        };
+    }
+    resize({ width, height, top, left, overlayRect }) {
+        const props = this.props;
+        props.style.width = overlayRect.width * width + "px";
+        props.style.height = overlayRect.height * height + "px";
+        props.style.top = overlayRect.top + (overlayRect.height * top)
+            + "px";
+        props.style.left = overlayRect.left + (overlayRect.width * left)
+            + "px";
+    }
+    addColor(elementInput) {
+        var _a;
+        const colorElement = createElement(`#${this.props.id}`, elementInput);
+        const color = (_a = elementInput.style) === null || _a === void 0 ? void 0 : _a.background;
+        if (color) {
+            colorElement.addEventListener("click", this.haldleOnClick(color));
+        }
+    }
+}
+
 const getCursorElement = (cursorImage) => ({
     tagName: "img",
     innerProps: {
@@ -11,7 +90,7 @@ const getCursorElement = (cursorImage) => ({
         width: "10%",
     },
 });
-export class DrawableCanvas extends Tool {
+class DrawableCanvas extends Tool {
     constructor(props) {
         var _a;
         super("DrawableCanvas");
@@ -37,6 +116,7 @@ export class DrawableCanvas extends Tool {
             this.cursor = createElement("#root", {
                 tagName: "div",
                 innerProps: {
+                    // @ts-ignore
                     classList: ["cursor"],
                 },
                 style: {
@@ -72,6 +152,7 @@ export class DrawableCanvas extends Tool {
         props.style.top = newTop + "px";
         props.style.left = newLeft + "px";
         if (!this.isSaved) {
+            // WARN: clear all  canvas
             const canvases = window.document.querySelectorAll(".image-canvas");
             canvases.forEach(canvas => {
                 canvas.remove();
@@ -112,6 +193,7 @@ export class DrawableCanvas extends Tool {
             tagName: "canvas",
             innerProps: {
                 id: `image-canvas-${this.newCanvasCtxs.length}`,
+                // @ts-ignore
                 classList: [`image-canvas`],
                 width: this.props.width,
                 height: this.props.height,
@@ -245,6 +327,7 @@ export class DrawableCanvas extends Tool {
             insertImgContainer.remove();
             this.insertedImage = null;
         });
+        // rotate handler
         rotateButton.addEventListener("mousedown", () => this.isRotating = !this.isRotating);
         rotateButton.addEventListener("mouseup", () => this.isRotating = false);
         insertImgContainer.addEventListener("mousemove", (evt) => {
@@ -272,6 +355,7 @@ export class DrawableCanvas extends Tool {
                     this.imageX = x;
                     this.imageY = y;
                     this.createConfirmLayer();
+                    // this.handleConfirmImage();
                 };
             }
         }
@@ -331,3 +415,278 @@ export class DrawableCanvas extends Tool {
         (_b = this.cursor) === null || _b === void 0 ? void 0 : _b.appendChild(createElement("img", getCursorElement(this.cursorImage)));
     }
 }
+
+class DrawingItemTool extends Tool {
+    constructor(props) {
+        super("DrawingItemTool");
+        this.props = props;
+        this.currentItem = "round";
+        this.cursorUrl = "assets/brush.png";
+        this.props.setAttribute("id", "tool-container");
+    }
+    static new(props) {
+        return new DrawingItemTool(props);
+    }
+    haldleOnClick(item, id, cursorUrl) {
+        return (_evt) => {
+            this.props.childNodes.forEach(node => {
+                // @ts-ignore
+                if (node.id === id)
+                    node.style.opacity = ".5";
+                // @ts-ignore
+                else
+                    node.style.opacity = "1";
+            });
+            this.currentItem = item;
+            this.cursorUrl = cursorUrl;
+        };
+    }
+    resize({ width, height, top, left, overlayRect }) {
+        const props = this.props;
+        props.style.width = overlayRect.width * width + "px";
+        props.style.height = overlayRect.height * height + "px";
+        props.style.top = overlayRect.top + (overlayRect.height * top)
+            + "px";
+        props.style.left = overlayRect.left + (overlayRect.width * left)
+            + "px";
+    }
+    addItem(url, elementInput) {
+        var _a;
+        if (!((_a = elementInput.innerProps) === null || _a === void 0 ? void 0 : _a.id)) {
+            throw AppError.new(ErrorKind.ElementIdNotFoundError, `tool item must have id`);
+        }
+        const itemElement = createElement(`#${this.props.id}`, elementInput);
+        const imgElement = createElement(`#${elementInput.innerProps.id}`, {
+            tagName: "img",
+            innerProps: {
+                src: url,
+            },
+            style: {
+                padding: "10%",
+                width: "80%",
+                height: "80%",
+            },
+        });
+        itemElement.appendChild(imgElement);
+        const item = elementInput.innerProps["data-line-cap"];
+        itemElement.addEventListener("click", this.haldleOnClick(item, itemElement.id, url));
+    }
+}
+
+const offsetSize = 15;
+class SizingTool extends Tool {
+    constructor(props) {
+        super("SizingTool");
+        this.props = props;
+        this.currentSize = 0;
+        this.isFirstSizeAdded = false;
+        this.props.setAttribute("id", "size-container");
+    }
+    static new(props) {
+        return new SizingTool(props);
+    }
+    haldleOnClick(size) {
+        return (_evt) => {
+            try {
+                const parsedSize = parseInt(size, 10);
+                this.currentSize = parsedSize * offsetSize;
+                // clean and active currentSize
+                this.props.childNodes.forEach(node => {
+                    const currentId = `size-indicator-slider-${this.currentSize / offsetSize}`;
+                    const currentEl = node.childNodes.item(1);
+                    // @ts-ignore
+                    if (currentEl.id === currentId) {
+                        // @ts-ignore
+                        currentEl.style.display = "block";
+                    }
+                    else {
+                        // @ts-ignore
+                        currentEl.style.display = "none";
+                    }
+                });
+            }
+            catch (err) {
+                console.log("size must number: " + err.message);
+            }
+        };
+    }
+    resize({ width, height, top, left, overlayRect }) {
+        const props = this.props;
+        props.style.width = overlayRect.width * width + "px";
+        props.style.height = overlayRect.height * height + "px";
+        props.style.top = overlayRect.top + (overlayRect.height * top)
+            + "px";
+        props.style.left = overlayRect.left + (overlayRect.width * left)
+            + "px";
+    }
+    addSize(elementInput) {
+        var _a, _b;
+        if (!((_a = elementInput.innerProps) === null || _a === void 0 ? void 0 : _a["data-size"])) {
+            throw AppError.new(ErrorKind.ElementIdNotFoundError, `Please set data attribute for size item`);
+        }
+        const size_item = createElement(`#${this.props.id}`, {
+            tagName: "div",
+            innerProps: {
+                id: `size-item-${elementInput.innerProps["data-size"]}`,
+            },
+            style: {
+                position: "absolute",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                left: (_b = elementInput.style) === null || _b === void 0 ? void 0 : _b.left,
+                height: "100%",
+            },
+        });
+        const size_indicator_container = createElement(`#${size_item.id}`, {
+            tagName: "div",
+            innerProps: {
+                id: `size-item-indicator-container-${elementInput.innerProps["data-size"]}`,
+            },
+            style: {
+                ...elementInput.style,
+                width: "none",
+                background: "none",
+                border: "none",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+            },
+        });
+        const size_indicator = createElement(`#${size_indicator_container.id}`, {
+            tagName: "div",
+            innerProps: {
+                id: `size-item-indicator-${elementInput.innerProps["data-size"]}`,
+            },
+            style: {
+                width: `${elementInput.innerProps["data-size"]}px`,
+                height: `${elementInput.innerProps["data-size"]}px`,
+                borderRadius: "50%",
+                background: "black",
+            },
+        });
+        const colorElement = createElement(`#${size_item.id}`, {
+            ...elementInput,
+            innerProps: {
+                id: `size-indicator-slider-${elementInput.innerProps["data-size"]}`,
+            },
+            style: {
+                ...elementInput.style,
+                display: "none",
+                width: "16px",
+                height: "16px",
+                borderRadius: "50%",
+            },
+        });
+        const size = elementInput.innerProps["data-size"];
+        if (!this.isFirstSizeAdded)
+            this.loadFirstSize(size);
+        if (size) {
+            colorElement.addEventListener("click", this.haldleOnClick(size));
+            size_indicator.addEventListener("click", this.haldleOnClick(size));
+        }
+    }
+    loadFirstSize(size) {
+        try {
+            const _size = parseInt(size, 10);
+            this.currentSize = _size * offsetSize;
+            // @ts-ignore
+            this.props.childNodes.item(0).childNodes.item(1).style.display =
+                "block";
+        }
+        catch (e) {
+            console.error(e);
+        }
+    }
+}
+
+class Paint {
+    constructor(tools, backgroundOverlay) {
+        this.backgroundOverlay = backgroundOverlay;
+        this.tools = tools;
+        // Event listeners
+        this.tools.canvas.props.addEventListener("mousedown", this.handleMouseDown.bind(this));
+        this.tools.canvas.props.addEventListener("mousemove", this.handleMouseMove.bind(this));
+        this.tools.canvas.props.addEventListener("mouseup", this.handleMouseUp.bind(this));
+        this.tools.canvas.props.addEventListener("mouseout", this.handleMouseOut.bind(this));
+        // Resize
+        setTimeout(() => this.resize(), 100);
+        window.addEventListener("resize", this.resize.bind(this));
+    }
+    resize() {
+        const overlayRect = this.backgroundOverlay.getBoundingClientRect();
+        this.tools.canvas.resize({
+            width: .750,
+            height: .70,
+            top: .235,
+            left: .016,
+            overlayRect,
+        });
+        this.tools.colors.resize({
+            width: .17,
+            height: .38,
+            top: .06,
+            left: .8,
+            overlayRect: overlayRect,
+        });
+        this.tools.items.resize({
+            width: .17,
+            height: .29,
+            top: .49,
+            left: .8,
+            overlayRect: overlayRect,
+        });
+        this.tools.sizing.resize({
+            width: .17,
+            height: .06,
+            top: .88,
+            left: .8,
+            overlayRect: overlayRect,
+        });
+    }
+    static new(tools, backgroundOverlay) {
+        return new Paint(tools, backgroundOverlay);
+    }
+    handleMouseDown(evt) {
+        this.tools.canvas.handleMouseDown(evt);
+    }
+    handleMouseMove(evt) {
+        if (this.tools.canvas.ctx) {
+            // this.tools.canvas.props.style.cursor = "url(/assets/pen.png), auto"
+            this.tools.canvas.addCursor(this.tools.items.cursorUrl);
+            // colors
+            this.tools.canvas.ctx.strokeStyle = this.tools.colors.currentColor;
+            // drawing items
+            switch (this.tools.items.currentItem) {
+                case "eraser": {
+                    this.tools.canvas.mode = "eraser";
+                    break;
+                }
+                case "insert": {
+                    this.tools.canvas.mode = "insert";
+                    break;
+                }
+                default: {
+                    this.tools.canvas.mode = "draw";
+                    break;
+                }
+            }
+            if (this.tools.items.currentItem !== "eraser"
+                && this.tools.items.currentItem !== "insert") {
+                this.tools.canvas.ctx.lineCap = this.tools.items.currentItem;
+            }
+            // size
+            this.tools.canvas.ctx.lineWidth = this.tools.sizing.currentSize;
+        }
+        this.tools.canvas.handleMouseMove(evt);
+    }
+    handleMouseUp(evt) {
+        this.tools.canvas.handleMouseUp(evt);
+    }
+    handleMouseOut(evt) {
+        this.tools.canvas.handleMouseOut(evt);
+    }
+}
+
+export { ColorTool, DrawableCanvas, DrawingItemTool, Paint, SizingTool, createElement };

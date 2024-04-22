@@ -229,8 +229,8 @@ export class DrawableCanvas extends Tool {
 
     const cursorRect = cursorEl.getBoundingClientRect();
 
-    const scrollX = window.scrollX || document.documentElement.scrollLeft
-    const scrollY = window.scrollY || document.documentElement.scrollTop
+    const scrollX = window.scrollX || document.documentElement.scrollLeft;
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
 
     const insertImgContainer = createElement(".container", {
       tagName: "div",

@@ -1,9 +1,13 @@
 {
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c rollup.config.js"
+  },
   "devDependencies": {
-    "@swc/cli": "^0.3.12",
-    "@swc/core": "^1.4.13",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^20.12.7",
-    "chokidar": "^3.6.0",
+    "rollup": "^4.16.1",
+    "rollup-plugin-dts": "^6.1.0",
     "typescript": "^5.4.5"
   }
 }
