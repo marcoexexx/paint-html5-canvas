@@ -2,6 +2,7 @@ import typescript from "@rollup/plugin-typescript";
 import { dts } from "rollup-plugin-dts";
 
 const config = [
+  // bundle
   {
     input: "./src/index.ts",
     output: {
@@ -10,6 +11,8 @@ const config = [
     },
     plugins: [typescript()],
   },
+
+  // d.ts
   {
     input: "public/dist/dts/index.d.ts",
     output: {

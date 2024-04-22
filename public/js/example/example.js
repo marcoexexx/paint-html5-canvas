@@ -7,7 +7,7 @@ import {
   DrawingItemTool,
   Paint,
   SizingTool,
-} from "../../dist/paint.js";
+} from "../../dist/paint.min.js";
 import { createColors } from "./colors.js";
 import { createItems } from "./items.js";
 import { createSizes } from "./sizes.js";
