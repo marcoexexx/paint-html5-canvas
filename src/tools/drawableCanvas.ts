@@ -108,9 +108,17 @@ export class DrawableCanvas extends Tool {
 
   private draw(x: number, y: number) {
     if (this.ctx) {
-      const ctxs = [this.ctx, ...this.newCanvasCtxs];
+      const ctxs: {
+        ctx: CanvasRenderingContext2D;
+        type: string;
+      }[] = [
+        { ctx: this.ctx, type: "main" },
+      ].concat(this.newCanvasCtxs.map(ctx => ({
+        ctx,
+        type: "image",
+      })));
 
-      ctxs.forEach(ctx => {
+      ctxs.forEach(({ ctx, type }) => {
         ctx.beginPath();
         if (this.mode === "eraser") {
           ctx.globalCompositeOperation = "destination-out";
@@ -119,6 +127,7 @@ export class DrawableCanvas extends Tool {
         } else if (this.mode === "insert") {
           return;
         } else {
+          if (type !== "main") return;
           ctx.globalCompositeOperation = "source-over";
           ctx.moveTo(this.lastX, this.lastY);
           ctx.lineTo(x, y);
