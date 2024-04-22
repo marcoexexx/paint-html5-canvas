@@ -1,1 +1,1 @@
-import {} from '../../dist/paint.js'
+import {} from "../../dist/paint.js";
