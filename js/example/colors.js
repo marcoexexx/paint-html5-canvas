@@ -1,6 +1,6 @@
 "use strict";
 
-import { ColorTool } from "../../dist/index.js";
+import { ColorTool } from "../../dist/paint.min.js";
 
 /**
  * @param {ColorTool} colorTool

@@ -1,6 +1,6 @@
 "use strict";
 
-import { DrawingItemTool } from "../../dist/index.js";
+import { DrawingItemTool } from "../../dist/paint.min.js";
 
 /**
  * @param {DrawingItemTool} itemTool
