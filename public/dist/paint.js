@@ -28,7 +28,6 @@ function createElement(parentQuery, elementInput) {
     if (elementInput.innerProps) {
         Object.keys(elementInput.innerProps).forEach(attr => {
             if (attr !== "classList") {
-                // @ts-ignore
                 element.setAttribute(attr, elementInput.innerProps[attr]);
             }
         });
@@ -116,7 +115,6 @@ class DrawableCanvas extends Tool {
             this.cursor = createElement("#root", {
                 tagName: "div",
                 innerProps: {
-                    // @ts-ignore
                     classList: ["cursor"],
                 },
                 style: {
@@ -152,7 +150,6 @@ class DrawableCanvas extends Tool {
         props.style.top = newTop + "px";
         props.style.left = newLeft + "px";
         if (!this.isSaved) {
-            // WARN: clear all  canvas
             const canvases = window.document.querySelectorAll(".image-canvas");
             canvases.forEach(canvas => {
                 canvas.remove();
@@ -200,7 +197,6 @@ class DrawableCanvas extends Tool {
             tagName: "canvas",
             innerProps: {
                 id: `image-canvas-${this.newCanvasCtxs.length}`,
-                // @ts-ignore
                 classList: [`image-canvas`],
                 width: this.props.width,
                 height: this.props.height,
@@ -334,7 +330,6 @@ class DrawableCanvas extends Tool {
             insertImgContainer.remove();
             this.insertedImage = null;
         });
-        // rotate handler
         rotateButton.addEventListener("mousedown", () => this.isRotating = !this.isRotating);
         rotateButton.addEventListener("mouseup", () => this.isRotating = false);
         insertImgContainer.addEventListener("mousemove", (evt) => {
@@ -362,7 +357,6 @@ class DrawableCanvas extends Tool {
                     this.imageX = x;
                     this.imageY = y;
                     this.createConfirmLayer();
-                    // this.handleConfirmImage();
                 };
             }
         }
@@ -437,10 +431,8 @@ class DrawingItemTool extends Tool {
     haldleOnClick(item, id, cursorUrl) {
         return (_evt) => {
             this.props.childNodes.forEach(node => {
-                // @ts-ignore
                 if (node.id === id)
                     node.style.opacity = ".5";
-                // @ts-ignore
                 else
                     node.style.opacity = "1";
             });
@@ -497,17 +489,13 @@ class SizingTool extends Tool {
             try {
                 const parsedSize = parseInt(size, 10);
                 this.currentSize = parsedSize * offsetSize;
-                // clean and active currentSize
                 this.props.childNodes.forEach(node => {
                     const currentId = `size-indicator-slider-${this.currentSize / offsetSize}`;
                     const currentEl = node.childNodes.item(1);
-                    // @ts-ignore
                     if (currentEl.id === currentId) {
-                        // @ts-ignore
                         currentEl.style.display = "block";
                     }
                     else {
-                        // @ts-ignore
                         currentEl.style.display = "none";
                     }
                 });
@@ -598,7 +586,6 @@ class SizingTool extends Tool {
         try {
             const _size = parseInt(size, 10);
             this.currentSize = _size * offsetSize;
-            // @ts-ignore
             this.props.childNodes.item(0).childNodes.item(1).style.display =
                 "block";
         }
@@ -612,12 +599,10 @@ class Paint {
     constructor(tools, backgroundOverlay) {
         this.backgroundOverlay = backgroundOverlay;
         this.tools = tools;
-        // Event listeners
         this.tools.canvas.props.addEventListener("mousedown", this.handleMouseDown.bind(this));
         this.tools.canvas.props.addEventListener("mousemove", this.handleMouseMove.bind(this));
         this.tools.canvas.props.addEventListener("mouseup", this.handleMouseUp.bind(this));
         this.tools.canvas.props.addEventListener("mouseout", this.handleMouseOut.bind(this));
-        // Resize
         setTimeout(() => this.resize(), 100);
         window.addEventListener("resize", this.resize.bind(this));
     }
@@ -660,11 +645,8 @@ class Paint {
     }
     handleMouseMove(evt) {
         if (this.tools.canvas.ctx) {
-            // this.tools.canvas.props.style.cursor = "url(/assets/pen.png), auto"
             this.tools.canvas.addCursor(this.tools.items.cursorUrl);
-            // colors
             this.tools.canvas.ctx.strokeStyle = this.tools.colors.currentColor;
-            // drawing items
             switch (this.tools.items.currentItem) {
                 case "eraser": {
                     this.tools.canvas.mode = "eraser";
@@ -683,7 +665,6 @@ class Paint {
                 && this.tools.items.currentItem !== "insert") {
                 this.tools.canvas.ctx.lineCap = this.tools.items.currentItem;
             }
-            // size
             this.tools.canvas.ctx.lineWidth = this.tools.sizing.currentSize;
         }
         this.tools.canvas.handleMouseMove(evt);
